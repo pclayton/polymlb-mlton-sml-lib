@@ -1,0 +1,8 @@
+local
+  poly.mlb
+in
+  signature THREAD
+
+  structure Thread
+  structure ThreadLib
+end

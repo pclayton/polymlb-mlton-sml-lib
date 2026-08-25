@@ -1,0 +1,8 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  sml-nj/unsafe.sig
+  sml-nj/unsafe.sml
+in
+  signature UNSAFE
+  structure Unsafe
+end

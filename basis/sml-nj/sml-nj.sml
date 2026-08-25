@@ -1,0 +1,92 @@
+(* Copyright (C) 1999-2006, 2008 Henry Cejtin, Matthew Fluet, Suresh
+ *    Jagannathan, and Stephen Weeks.
+ * Copyright (C) 1997-2000 NEC Research Institute.
+ *
+ * MLton is released under a HPND-style license.
+ * See the file MLton-LICENSE for details.
+ *)
+
+structure SMLofNJ: SML_OF_NJ =
+   struct
+(*
+      structure Cont =
+         struct
+            structure C = MLton.Cont
+
+            type 'a cont = 'a C.t
+            val callcc = C.callcc
+            val isolate = C.isolate
+            fun throw k v = C.throw (k, v)
+         end
+*)
+
+      structure SysInfo =
+         struct
+            exception UNKNOWN
+            datatype os_kind = BEOS | MACOS | OS2 | UNIX | WIN32
+
+            fun getHostArch () =
+               case PolyML.architecture () of
+                  "X86" => "X86"
+                | "X86_64" => "AMD64"
+                | "X86_64_32" => "AMD64"
+                | s => s
+(*
+               MLton.Platform.Arch.toString MLton.Platform.Arch.host
+*)
+
+            fun getOSKind () =
+               WIN32
+(*
+               let
+                  open MLton.Platform.OS
+               in
+                  case host of
+                     AIX => UNIX
+                   | Cygwin => UNIX
+                   | Darwin => MACOS
+                   | FreeBSD => UNIX
+                   | Hurd => UNIX
+                   | HPUX => UNIX
+                   | Linux => UNIX
+                   | MinGW => WIN32
+                   | NetBSD => UNIX
+                   | OpenBSD => UNIX
+                   | Solaris => UNIX
+               end
+*)
+
+            fun getOSName () =
+               "Win32"
+(*
+               MLton.Platform.OS.toString MLton.Platform.OS.host
+*)
+         end
+
+      val getCmdName = CommandLine.name
+      val getArgs = CommandLine.arguments
+
+      fun getAllArgs () = getCmdName () :: getArgs ()
+
+      fun exnHistory _ = []  (* `PolyML.exceptionLocation` doesn't work. *)
+
+(*
+      fun exportFn (file: string, f) =
+         let
+            open MLton.World OS.Process
+         in
+            case save (file ^ ".mlton") of
+               Original => exit success
+             | Clone => exit (f (getCmdName (), getArgs ()) handle _ => failure)
+         end
+
+      fun exportML (f: string): bool =
+         let
+            open MLton.World
+         in
+            case save (f ^ ".mlton") of
+               Clone => true
+             | Original => false
+         end
+*)
+   end

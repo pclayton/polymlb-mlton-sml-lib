@@ -1,0 +1,29 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+  $(SML_LIB)/mlyacc-lib/mlyacc-lib.mlb
+
+  html-sig.sml
+  html.sml
+  make-html.sml
+  html-defaults.sml
+  html-error-sig.sml
+  check-html-fn.sml
+  html-attr-vals.sml
+  html-attrs-sig.sml
+  html-gram.sig
+  html-elements-fn.sml
+  html-lex.sml
+  html-gram.sml
+  html-attrs-fn.sml
+  html-parser-fn.sml
+  pr-html.sml
+in
+  signature HTML_ERROR
+  signature HTML
+  structure HTML
+  structure MakeHTML
+  structure PrHTML
+  structure HTMLDefaults
+  functor HTMLParserFn
+end

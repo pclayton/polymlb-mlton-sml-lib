@@ -1,0 +1,9 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/basis/polyml.mlb
+  sml-nj/sml-nj.sig
+  sml-nj/sml-nj.sml
+in
+  signature SML_OF_NJ
+  structure SMLofNJ
+end

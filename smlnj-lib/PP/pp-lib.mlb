@@ -1,0 +1,40 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+  $(SML_LIB)/smlnj-lib/HTML/html-lib.mlb
+
+  mono-buffer/mono-buffer.mlb
+  src/pp-stream-sig.sml
+  src/pp-debug-fn.sml
+  src/pp-device-sig.sml
+  devices/simple-textio-dev.sml
+  src/pp-token-sig.sml
+  src/pp-stream-fn.sml
+  src/pp-desc-sig.sml
+  src/pp-desc-fn.sml
+  devices/string-token.sml
+  devices/char-buffer-pp.sml
+  devices/text-pp.sml
+  devices/textio-pp.sml
+  devices/ansi-term-dev.sml
+  devices/html3-dev.sml
+  devices/ansi-term-pp.sml
+in
+  signature PP_DESC
+  signature PP_DEVICE
+  signature PP_TOKEN
+  signature PP_STREAM
+
+  functor PPStreamFn
+  functor PPDescFn
+  functor PPDebugFn
+
+  (* devices *)
+  structure TextIOPP
+  structure TextPP
+  structure SimpleTextIODev
+  structure CharBufferPP
+  structure ANSITermDev
+  structure ANSITermPP
+  structure StringToken
+end

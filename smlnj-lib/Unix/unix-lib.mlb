@@ -1,0 +1,15 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+
+  unix-env-sig.sml
+  unix-env.sml
+  unix-path-sig.sml
+  unix-path.sml
+in
+  signature UNIX_ENV
+  signature UNIX_PATH
+
+  structure UnixEnv
+  structure UnixPath
+end

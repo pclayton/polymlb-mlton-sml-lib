@@ -1,0 +1,8 @@
+local
+  poly.mlb
+in
+(*
+  signature FOREIGN
+*)
+  structure Foreign
+end

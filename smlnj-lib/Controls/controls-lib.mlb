@@ -1,0 +1,23 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+
+  controls-sig.sml
+  control-reps.sml
+  controls.sml
+  control-set-sig.sml
+  control-set.sml
+  control-registry-sig.sml
+  control-registry.sml
+  control-util-sig.sml
+  control-util.sml
+in
+  signature CONTROLS
+  structure Controls
+  signature CONTROL_SET
+  structure ControlSet
+  signature CONTROL_REGISTRY
+  structure ControlRegistry
+  signature CONTROL_UTIL
+  structure ControlUtil
+end

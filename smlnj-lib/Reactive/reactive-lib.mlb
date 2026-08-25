@@ -1,0 +1,11 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+  reactive-sig.sml
+  instruction.sml
+  machine.sml
+  reactive.sml
+in
+  signature REACTIVE
+  structure Reactive
+end

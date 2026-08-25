@@ -1,0 +1,342 @@
+(* Copyright (C) 2016-2021, 2023 Phil Clayton <phil.clayton@veonix.com>
+ *
+ * This file is part of the Giraffe Library runtime.  For your rights to use
+ * this file, see the file 'LICENCE.RUNTIME' distributed with Giraffe Library
+ * or visit <http://www.giraffelibrary.org/licence-runtime.html>.
+ *)
+
+structure PolyMLFFI : POLYML_F_F_I =
+  struct
+    open Foreign
+
+    val getSymbolFromLibrary = getSymbol
+    val getSymbol = getSymbolFromLibrary (loadExecutable ())
+
+    structure Memory =
+      struct
+        open Memory
+
+        structure Pointer =
+          struct
+            type t = voidStar
+            val {size, ...} = LowLevel.cTypePointer
+            val toSysWord = voidStar2Sysword
+            val fromSysWord = sysWord2VoidStar
+            val null = null
+            val add = ++
+            val sub = --
+          end
+
+        fun getWord8 (p, i) = get8 (p, Word.fromInt i)
+        fun getWord16 (p, i) = get16 (p, Word.fromInt i)
+        fun getWord32 (p, i) = get32 (p, Word.fromInt i)
+        fun getWord64 (p, i) = get64 (p, Word.fromInt i)
+        fun setWord8 (p, i, x) = set8 (p, Word.fromInt i, x)
+        fun setWord16 (p, i, x) = set16 (p, Word.fromInt i, x)
+        fun setWord32 (p, i, x) = set32 (p, Word.fromInt i, x)
+        fun setWord64 (p, i, x) = set64 (p, Word.fromInt i, x)
+
+        fun getFloat (p, i) = Memory.getFloat (p, Word.fromInt i)
+        fun getDouble (p, i) = Memory.getDouble (p, Word.fromInt i)
+        fun setFloat (p, i, x) = Memory.setFloat (p, Word.fromInt i, x)
+        fun setDouble (p, i, x) = Memory.setDouble (p, Word.fromInt i, x)
+
+        fun getPointer (p, i) = getAddress (p, Word.fromInt i)
+        fun setPointer (p, i, x) = setAddress (p, Word.fromInt i, x)
+
+        fun copy (dest, src, numWord8) =
+          let
+            val (<<, >>) = (Word.<<, Word.>>)
+            infix 7 << >>
+            val numWord32 = numWord8 >> 0w2
+            fun copyWord8 i = set8 (dest, i, get8 (src, i))
+            fun copyWord32 i = set32 (dest, i, get32 (src, i))
+            fun copy32 i =
+              if i < numWord32
+              then (copyWord32 i; copy32 (i + 0w1))
+              else ()
+            fun copy8 i =
+              if i < numWord8
+              then (copyWord8 i; copy8 (i + 0w1))
+              else ()
+            val () = copy32 0w0
+            val () = copy8 (numWord32 << 0w2)
+          in
+            ()
+          end
+
+        fun init (dest, word8, numWord8) =
+          let
+            val word32 =
+              let
+                val w = Word32.fromLarge (Word8.toLarge word8)
+                val << = Word32.<<
+                infix 7 <<
+              in
+                w + w << 0w8 + w << 0w16 + w << 0w24
+              end
+            val (<<, >>) = (Word.<<, Word.>>)
+            infix 7 << >>
+            val numWord32 = numWord8 >> 0w2
+            fun copyWord8 i = set8 (dest, i, word8)
+            fun copyWord32 i = set32 (dest, i, word32)
+            fun copy32 i =
+              if i < numWord32
+              then (copyWord32 i; copy32 (i + 0w1))
+              else ()
+            fun copy8 i =
+              if i < numWord8
+              then (copyWord8 i; copy8 (i + 0w1))
+              else ()
+            val () = copy32 0w0
+            val () = copy8 (numWord32 << 0w2)
+          in
+            ()
+          end
+      end
+
+    val symbolFromAddress = LowLevel.symbolFromAddress
+
+
+    (* `alignUp` copied from Foreign.sml *)
+    fun alignUp (s, align) = Word.andb (s + align - 0w1, ~ align)
+
+    fun getArgOffsets argTypes =
+      let
+        val init = {
+          revArgOffsets = [],
+          memSize       = 0w0
+        }
+        fun next (argType, {revArgOffsets, memSize}) =
+          let
+            val argOffset = alignUp (memSize, #align argType)
+          in
+            {
+              revArgOffsets = argOffset :: revArgOffsets,
+              memSize       = argOffset + #size argType
+            }
+          end
+        val {revArgOffsets, memSize} = List.foldl next init argTypes
+      in
+        {argOffsets = rev revArgOffsets, argsMemSize = memSize}
+      end
+
+    fun isTypeVoid cType = #typeForm cType = #typeForm LowLevel.cTypeVoid
+    fun checkArgType argType =
+      if isTypeVoid argType
+      then raise Foreign "argument has type void"
+      else ()
+
+    structure LowLevel =
+      struct
+        type ctype = LowLevel.cType
+
+        fun cFunctionWithAbi abi argTypes retType =
+          let
+            val () = List.app checkArgType argTypes
+            val {argOffsets, ...} = getArgOffsets argTypes
+            val argOffsetTable = Vector.fromList argOffsets
+            val ++ = Memory.++
+            infix ++
+            val makeCallback = LowLevel.cFunctionWithAbi abi argTypes retType
+            fun getArgAddr (args, ret) = (
+              fn i => args ++ Vector.sub (argOffsetTable, i),
+              ret
+            )
+          in
+            fn f => makeCallback (f o getArgAddr)
+          end
+
+        val cFunction = cFunctionWithAbi Foreign.LowLevel.abiDefault
+
+        fun callWithAbi abi argTypes retType =
+          let
+            val () = List.app checkArgType argTypes
+            val callFunc = LowLevel.callwithAbi abi argTypes retType
+            val {argOffsets, argsMemSize} = getArgOffsets argTypes
+            val retOffset = alignUp (argsMemSize, #align retType)
+            val memSize = retOffset + #size retType
+          in
+            fn fnAddr =>
+            fn argStores =>
+            fn retLoad =>
+              let
+                open Memory
+                infix ++
+                val rMem = malloc memSize
+                val retAddr = rMem ++ retOffset
+                val argAddrs = List.map (fn offset => rMem ++ offset) argOffsets
+                val argFrees = ListPair.mapEq (fn (f, x) => f x) (argStores, argAddrs)
+                fun freeAll () = (List.app (fn f => f ()) argFrees; free rMem)
+              in
+                let
+                  val () = callFunc fnAddr (rMem, retAddr)
+                  val ret = retLoad retAddr
+                  val () = freeAll ()
+                in
+                  ret
+                end
+                  handle e => (freeAll (); PolyML.Exception.reraise e)
+              end
+          end
+
+        fun call fnAddr = callWithAbi Foreign.LowLevel.abiDefault fnAddr
+      end
+
+
+    fun makeConversion {load, store, ctype} =
+      Foreign.makeConversion {
+        load = load,
+        store = fn (addr, x) => store x addr,
+        ctype = ctype
+      }
+
+    fun breakConversion conv =
+      let
+        val {load, store, ctype} = Foreign.breakConversion conv
+      in
+        {
+          load  = load,
+          store = fn x => fn addr => store (addr, x),
+          ctype = ctype
+        }
+      end
+
+
+    type ('as, 'r) func = {
+      argTypes   : LowLevel.ctype list,
+      retType    : LowLevel.ctype,
+      argsStore  : 'as -> (Memory.voidStar -> unit -> unit) list,
+      argsLoad   : (int -> Memory.voidStar) -> 'as,
+      retStore   : 'r -> Memory.voidStar -> unit,
+      retLoad    : Memory.voidStar -> 'r
+    }
+
+    fun argConv --> retConv =
+      let
+        val {ctype = argType, store = argStore, load = argLoad} = breakConversion argConv
+        val {ctype = retType, store = retStore, load = retLoad} = breakConversion retConv
+        val {argTypes, argsStore, argsLoad} =
+          if not (isTypeVoid argType)
+          then
+            {
+              argTypes  = argType :: [],
+              argsStore = fn x => argStore x :: [],
+              argsLoad  = fn get => argLoad (get 0)
+            }
+          else
+            {
+              argTypes  = [],
+              argsStore = fn _ => [],
+              argsLoad  = fn _ => argLoad Memory.null
+            }
+      in
+        {
+          argTypes  = argTypes,
+          argsStore = argsStore,
+          argsLoad  = argsLoad,
+          retType   = retType,
+          retStore  = fn x => fn addr => ignore (retStore x addr),
+          retLoad   = retLoad
+        }
+      end
+
+    fun argConv &&> {argTypes, retType, argsStore, argsLoad, retStore, retLoad} =
+      let
+        val {ctype = argType, store = argStore, load = argLoad} = breakConversion argConv
+        fun succ n = n + 1
+        val {argTypes, argsStore, argsLoad} =
+          if not (isTypeVoid argType)
+          then
+            {
+              argTypes  = argType :: argTypes,
+              argsStore = fn x & xs => argStore x :: argsStore xs,
+              argsLoad  = fn get => argLoad (get 0) & argsLoad (get o succ)
+            }
+          else
+            {
+              argTypes  = argTypes,
+              argsStore = fn _ & xs => argsStore xs,
+              argsLoad  = fn get => argLoad Memory.null & argsLoad get
+            }
+      in
+        {
+          argTypes  = argTypes,
+          argsStore = argsStore,
+          argsLoad  = argsLoad,
+          retType   = retType,
+          retStore  = retStore,
+          retLoad   = retLoad
+        }
+      end
+
+
+    open PolyMLFFIIntConvs
+
+
+    fun cStruct func =
+      let
+        val {argTypes, argsStore, argsLoad, ...} = func
+        val {argOffsets, ...} = getArgOffsets argTypes
+        val argOffsetTable = Vector.fromList argOffsets
+        val ++ = Memory.++
+        infix ++
+        fun load addr = argsLoad (fn i => addr ++ Vector.sub (argOffsetTable, i))
+        fun store args addr =
+          let
+            val argStores = argsStore args
+            val argAddrs = List.map (fn offset => addr ++ offset) argOffsets
+            val argFrees = ListPair.mapEq (fn (f, x) => f x) (argStores, argAddrs)
+          in
+            fn () => List.app (fn f => f ()) argFrees
+          end
+      in
+        makeConversion {
+          load  = load,
+          store = store,
+          ctype = Foreign.LowLevel.cStruct argTypes
+        }
+      end
+
+
+    (* Type `'a closure` copied from Foreign.sml because it is abstract
+     * in Foreign, so we can't create our own values.  Therefore function
+     * `cFunction` is also copied. *)
+    type 'a closure = Memory.voidStar
+    local
+      fun load _ = raise Foreign "Cannot return a closure"
+      fun store closure addr =
+        (Memory.setAddress (addr, 0w0, closure); fn () => RunCall.touch closure)
+    in
+      val cFunction : ('a -> 'b) closure conversion =
+        makeConversion {
+          load  = load,
+          store = store,
+          ctype = Foreign.LowLevel.cTypePointer
+        }
+    end
+
+    fun closureWithAbi abi (func : ('as, 'r) func) =
+      let
+        val {argTypes, retType, argsLoad, retStore, ...} = func
+        val makeCallback = LowLevel.cFunctionWithAbi abi argTypes retType
+        fun callback f (args, ret) = (retStore o f o argsLoad) args ret
+      in
+        fn f => makeCallback (callback f)
+      end
+
+    fun closure func = closureWithAbi Foreign.LowLevel.abiDefault func
+
+    val nullClosure = Memory.Pointer.null
+
+
+    fun callWithAbi abi func =
+      let
+        val {argTypes, retType, argsStore, retLoad, ...} = func
+        val callFunc = LowLevel.callWithAbi abi argTypes retType
+      in
+        fn fnAddr => fn args => callFunc fnAddr (argsStore args) retLoad
+      end
+
+    fun call func = callWithAbi Foreign.LowLevel.abiDefault func
+  end

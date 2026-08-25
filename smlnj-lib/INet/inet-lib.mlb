@@ -1,0 +1,23 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+
+  sock-util-sig.sml
+  sock-util.sml
+
+  (* The structure UnixSockUtil requires the structure UnixSock
+   * which is not available in Poly/ML built on Windows. *)
+  (*
+  unix-sock-util.sml
+   *)
+in
+  signature SOCK_UTIL
+  structure SockUtil
+
+  (* The structure UnixSockUtil requires the structure UnixSock
+   * which is not available in Poly/ML built on Windows. *)
+  (*
+  signature UNIX_SOCK_UTIL
+  structure UnixSockUtil
+   *)
+end

@@ -1,0 +1,43 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+
+  (* internal glue language *)
+  FrontEnd/syntax-sig.sml
+  FrontEnd/syntax.sml
+
+  (* utility functions *)
+  Glue/match-tree.sml
+  BackEnd/fsm.sml
+
+  (* front/back-ends signatures *)
+  FrontEnd/parser-sig.sml
+  BackEnd/engine-sig.sml
+
+  (* frontends *)
+  FrontEnd/awk-syntax.sml
+
+  (* engines *)
+  BackEnd/bt-engine.sml
+  BackEnd/dfa-engine.sml
+  BackEnd/thompson-engine.sml
+
+  (* glue functor *)
+  Glue/regexp-sig.sml
+  Glue/regexp-fn.sml
+in
+  signature REGEXP_SYNTAX
+  signature REGEXP_PARSER
+  signature MATCH_TREE
+  signature REGEXP_ENGINE
+  signature REGEXP
+
+  structure RegExpSyntax
+  structure MatchTree
+  structure AwkSyntax
+  structure BackTrackEngine
+  structure DfaEngine
+  structure ThompsonEngine
+
+  functor RegExpFn
+end

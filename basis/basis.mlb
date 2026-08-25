@@ -1,0 +1,8 @@
+ann
+  "poly:importAll"
+in
+  open BasisLib
+  int64.sml
+  structure Word31 = Word  (* for compact32bit only *)
+  structure Real64 = Real
+end

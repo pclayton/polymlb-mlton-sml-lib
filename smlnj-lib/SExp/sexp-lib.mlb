@@ -1,0 +1,18 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+  $(SML_LIB)/smlnj-lib/PP/pp-lib.mlb
+  $(SML_LIB)/mllpt-lib/mllpt-lib.mlb
+
+  sexp-tokens.sml
+  sexp.lex.sml
+  sexp.sml
+  sexp-parser.sml
+  sexp-pp.sml
+  sexp-printer.sml
+in
+  structure SExp
+  structure SExpParser
+  structure SExpPP
+  structure SExpPrinter
+end

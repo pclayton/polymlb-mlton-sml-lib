@@ -1,0 +1,28 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+
+  hash-cons-sig.sml
+  hash-cons.sml
+  hash-cons-set-sig.sml
+  hash-cons-map-sig.sml
+  hash-cons-set.sml
+  hash-cons-map.sml
+  hash-cons-ground-fn.sml
+  hash-cons-string.sml
+  hash-cons-atom.sml
+in
+  signature HASH_CONS
+  signature HASH_CONS_MAP
+  signature HASH_CONS_SET
+
+  structure HashCons
+  structure HashConsMap
+  structure HashConsSet
+
+  (* standard base types *)
+  structure HashConsAtom
+  structure HashConsString
+
+  functor HashConsGroundFn
+end

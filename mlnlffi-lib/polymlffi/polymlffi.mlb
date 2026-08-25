@@ -1,0 +1,14 @@
+Pair-infixes.sml
+PolyMLFFI-infixes.sml
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/basis/polyml.mlb
+  $(SML_LIB)/basis/foreign.mlb
+  $(SML_LIB)/basis/runcall.mlb
+  PolyMLFFIIntConvs.sml
+in
+  Pair.sml
+  Pair-ops.sml
+  POLYML_F_F_I-sig.sml
+  PolyMLFFI.sml
+end

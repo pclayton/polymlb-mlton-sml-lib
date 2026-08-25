@@ -1,0 +1,9 @@
+local
+  poly.mlb
+in
+(*
+  signature UNIVERSAL
+*)
+  structure Universal
+  structure UniversalArray
+end
