@@ -24,6 +24,10 @@ polymlb -mlb-path-var "SML_LIB <path/to/this/directory>" ...
 For following MLB files are provided by both MLton and PolyMLB:
   - `$(SML_LIB)/basis/basis.mlb` for the Basis Library.
   - `$(SML_LIB)/basis/sml-nj.mlb` for the structure `SMLofNJ`.
+  - `$(SML_LIB)/mlyacc-lib/mlyacc-lib.mlb` for the MLYacc parser modules.
+  - `$(SML_LIB)/mlnlffi-lib/mlnlffi-lib.mlb` for the ML-NLFFI modules.
+  - `$(SML_LIB)/smlnj-lib/*/*.mlb` for the SML/NJ library modules.
+  - `$(SML_LIB)/mllpt-lib/mllpt-lib.mlb` for the MLLPTLibrary modules.
 
 
 ## Poly/ML-specific libraries
